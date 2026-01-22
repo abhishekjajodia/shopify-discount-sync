@@ -8,10 +8,15 @@ Multi-store webhook system that automatically syncs customer discount eligibilit
 **Solution:** Automatically display eligible discounts on product pages based on customer segments
 
 **How it works:**
-1. Shopify sends webhook when discount is created/updated
-2. System calculates which customers are eligible (based on segments)
-3. Updates customer metafields with eligible discount codes
+1. **Discount webhooks** - When discount created/updated, sync eligible customers immediately
+2. **Customer webhooks** - When customer updated, check if they entered/exited segments (NEW! ✨)
+3. System updates customer metafields with eligible discount codes
 4. Liquid template displays codes on product pages (PDP)
+
+**Key benefits:**
+- Real-time updates when customers enter/exit segments
+- Efficient: Single API call checks all segments (query cost: 2)
+- No periodic sync job needed
 
 ## Features
 
@@ -66,11 +71,13 @@ For each store:
 
 In Shopify Admin (Settings → Notifications → Webhooks):
 
-Add these webhooks pointing to: `https://your-app.vercel.app/api/webhooks/discount`
-
+**Discount Webhooks** - Point to: `https://your-app.vercel.app/api/webhooks/discount`
 - `discounts/create`
 - `discounts/update`
 - `discounts/delete`
+
+**Customer Webhook** - Point to: `https://your-app.vercel.app/api/webhooks/customer`
+- `customers/update` (checks segment membership on any customer update)
 
 **Format:** JSON
 
@@ -100,13 +107,15 @@ In your product template (`product-template.liquid` or similar):
 shopify-discount-sync/
 ├── api/
 │   └── webhooks/
-│       └── discount.js        # Main webhook handler
+│       ├── discount.js          # Discount webhook handler
+│       └── customer.js          # Customer webhook handler (NEW!)
 ├── lib/
-│   ├── shopify.js             # Shopify API client
-│   ├── eligibility.js         # Eligibility logic
-│   └── metafield-updater.js   # Metafield updates
-├── package.json               # Dependencies
-└── vercel.json                # Vercel config
+│   ├── shopify.js               # Shopify API client
+│   ├── eligibility.js           # Eligibility logic
+│   ├── metafield-updater.js     # Metafield updates
+│   └── segment-checker.js       # Segment membership checker (NEW!)
+├── package.json                 # Dependencies
+└── vercel.json                  # Vercel config
 ```
 
 ## Metafield Structure
